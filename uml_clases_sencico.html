@@ -1,0 +1,214 @@
+
+<style>
+#cd svg { width: 100% !important; height: auto !important; }
+#cd svg.classDiagram .divider path { stroke-opacity: 0.4; }
+</style>
+<div id="cd" style="padding: 0.5rem 0;"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#2a2760' : '#EEEDFE',
+    primaryBorderColor: dark ? '#534AB7' : '#534AB7',
+    primaryTextColor: dark ? '#c2c0b6' : '#26215C',
+    secondaryColor: dark ? '#083530' : '#E1F5EE',
+    secondaryBorderColor: dark ? '#1D9E75' : '#0F6E56',
+    tertiaryColor: dark ? '#3d2a0a' : '#FAEEDA',
+    tertiaryBorderColor: dark ? '#BA7517' : '#854F0B',
+    noteBkgColor: dark ? '#3d2a0a' : '#FAEEDA',
+    noteTextColor: dark ? '#FAC775' : '#412402',
+  },
+});
+
+const diagram = `classDiagram
+  class Usuario {
+    +UUID id
+    +String email
+    +String dni
+    +String nombres
+    +String apellidos
+    +String passwordHash
+    +String telefono
+    +RolEnum rol
+    +Boolean activo
+    +Timestamp creadoEn
+    +registrar()
+    +autenticar()
+    +cerrarSesion()
+  }
+
+  class PerfilAlumno {
+    +UUID id
+    +UUID usuarioId
+    +Date fechaNacimiento
+    +String direccion
+    +String distrito
+    +NivelEduEnum nivelEducativo
+    +String ocupacion
+    +Timestamp registradoEn
+    +completarPerfil()
+    +obtenerMatriculas()
+  }
+
+  class Sesion {
+    +UUID id
+    +UUID usuarioId
+    +String token
+    +String ipAddress
+    +String userAgent
+    +Timestamp expiraEn
+    +Timestamp creadoEn
+    +validar()
+    +revocar()
+  }
+
+  class Categoria {
+    +UUID id
+    +String slug
+    +String nombre
+    +String descripcion
+    +Boolean activo
+    +listarCursos()
+  }
+
+  class Curso {
+    +UUID id
+    +UUID categoriaId
+    +String nombre
+    +String descripcion
+    +ModalidadEnum modalidad
+    +Integer duracionHoras
+    +Decimal precio
+    +Integer vacantesTotal
+    +Integer vacantesDisponibles
+    +Date fechaInicio
+    +Date fechaFin
+    +Boolean activo
+    +verificarVacante()
+    +obtenerHorarios()
+    +reducirVacante()
+  }
+
+  class Horario {
+    +UUID id
+    +UUID cursoId
+    +DiaEnum diaSemana
+    +Time horaInicio
+    +Time horaFin
+    +String sede
+    +String aula
+    +verificarConflicto()
+  }
+
+  class Matricula {
+    +UUID id
+    +UUID alumnoId
+    +UUID cursoId
+    +UUID terminosVerId
+    +EstadoMatEnum estado
+    +Boolean aceptoTerminos
+    +Timestamp aceptoEn
+    +Timestamp fechaMatricula
+    +confirmar()
+    +cancelar()
+    +generarConstancia()
+  }
+
+  class Pago {
+    +UUID id
+    +UUID matriculaId
+    +String refExterna
+    +Decimal monto
+    +MetodoPagoEnum metodoPago
+    +EstadoPagoEnum estadoPago
+    +String pasarela
+    +Timestamp fechaPago
+    +procesar()
+    +reembolsar()
+    +generarRecibo()
+  }
+
+  class TerminosVersion {
+    +UUID id
+    +String version
+    +Text contenido
+    +Boolean vigente
+    +Timestamp publicadoEn
+    +activarVersion()
+    +obtenerVigente()
+  }
+
+  class AuditoriaLog {
+    +BigInt id
+    +UUID usuarioId
+    +String tablaAfectada
+    +UUID registroId
+    +AccionEnum accion
+    +JSON datosAnteriores
+    +JSON datosNuevos
+    +String ipAddress
+    +Timestamp ocurridoEn
+    +registrar()
+  }
+
+  class Reporte {
+    +UUID id
+    +UUID generadoPor
+    +TipoRepEnum tipo
+    +JSON parametros
+    +String archivoUrl
+    +Timestamp generadoEn
+    +generar()
+    +exportarPDF()
+    +exportarExcel()
+  }
+
+  Usuario "1" --> "1" PerfilAlumno : tiene perfil
+  Usuario "1" --> "0..*" Sesion : abre
+  Usuario "1" --> "0..*" AuditoriaLog : genera log
+  Usuario "1" --> "0..*" Reporte : genera
+  Categoria "1" --> "1..*" Curso : agrupa
+  Curso "1" --> "1..*" Horario : tiene
+  PerfilAlumno "1" --> "0..*" Matricula : realiza
+  Curso "1" --> "0..*" Matricula : recibe
+  Matricula "1" --> "1..*" Pago : genera
+  TerminosVersion "1" --> "0..*" Matricula : es aceptada por
+`;
+
+const { svg } = await mermaid.render('cd-svg', diagram);
+document.getElementById('cd').innerHTML = svg;
+
+document.querySelectorAll('#cd svg .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+
+document.querySelectorAll('#cd svg .row-rect-odd path, #cd svg .row-rect-even path').forEach(p => {
+  p.setAttribute('stroke', 'none');
+});
+</script>
